@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chargeback Risk Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#12151b; --panel:#181c24; --panel-2:#1f2430;
+    --line:#2a3040; --line-soft:#232935;
+    --ink:#eceef2; --ink-muted:#8b93a3; --ink-faint:#5b6272;
+    --red:#e2574c; --red-dim:#3a2624;
+    --green:#4ca771; --green-dim:#1e3327;
+    --amber:#e3a73e; --amber-dim:#3a2f1a;
+    --blue:#6f8fed;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'IBM Plex Sans',sans-serif; line-height:1.5;
+    padding:0 0 80px;
+  }
+  .wrap{max-width:960px; margin:0 auto; padding:0 32px;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  .serif{font-family:'Fraunces',serif;}
+
+  header{padding:56px 0 40px; border-bottom:1px solid var(--line);}
+  .eyebrow{font-size:13px; color:var(--ink-faint); margin:0 0 12px; letter-spacing:0.02em;}
+  h1{font-size:38px; font-weight:500; margin:0 0 14px; letter-spacing:-0.01em;}
+  .sub{font-size:16px; color:var(--ink-muted); max-width:560px; margin:0 0 32px;}
+
+  .hero-row{display:flex; gap:40px; flex-wrap:wrap; align-items:flex-end;}
+  .hero-stat .num{font-family:'Fraunces',serif; font-size:52px; font-weight:500; color:var(--green); line-height:1;}
+  .hero-stat .lbl{font-size:13px; color:var(--ink-muted); margin-top:8px;}
+  .hero-stat.secondary .num{font-size:28px; color:var(--ink);}
+
+  section{padding:44px 0; border-bottom:1px solid var(--line);}
+  section:last-child{border-bottom:none;}
+  .section-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:24px; flex-wrap:wrap; gap:8px;}
+  h2{font-size:20px; font-weight:500; margin:0;}
+  .section-note{font-size:13px; color:var(--ink-faint); margin:0;}
+
+  .metric-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:8px; overflow:hidden;}
+  .metric-cell{background:var(--panel); padding:20px 18px;}
+  .metric-cell .val{font-family:'IBM Plex Mono',monospace; font-size:26px; font-weight:500;}
+  .metric-cell .lbl{font-size:12px; color:var(--ink-muted); margin-top:6px;}
+
+  .two-col{display:grid; grid-template-columns:1.2fr 1fr; gap:32px;}
+  @media(max-width:720px){.two-col{grid-template-columns:1fr;}}
+
+  .bar-row{display:grid; grid-template-columns:170px 1fr 48px; align-items:center; gap:10px; margin-bottom:10px; font-size:13px;}
+  .bar-track{height:8px; background:var(--panel-2); border-radius:4px; overflow:hidden;}
+  .bar-fill{height:100%; background:var(--blue); border-radius:4px;}
+  .bar-val{font-family:'IBM Plex Mono',monospace; color:var(--ink-muted); text-align:right;}
+
+  .cm-grid{display:grid; grid-template-columns:auto 1fr 1fr; gap:1px; background:var(--line); border:1px solid var(--line); border-radius:8px; overflow:hidden; font-size:13px;}
+  .cm-cell{background:var(--panel); padding:14px 16px;}
+  .cm-head{background:var(--panel-2); color:var(--ink-muted); font-size:12px; display:flex; align-items:center;}
+  .cm-num{font-family:'IBM Plex Mono',monospace; font-size:20px; font-weight:500;}
+  .cm-tag{font-size:11px; color:var(--ink-faint); margin-top:4px;}
+  .cm-safe{color:var(--green);} .cm-risk{color:var(--red);}
+
+  .reason-row{display:grid; grid-template-columns:170px 1fr 80px; align-items:center; gap:10px; margin-bottom:12px;}
+  .reason-name{font-size:13px;}
+  .reason-track{height:14px; background:var(--panel-2); border-radius:4px; overflow:hidden;}
+  .reason-fill{height:100%; border-radius:4px;}
+  .reason-val{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink-muted); text-align:right;}
+
+  .ctx-item{border:1px solid var(--line); border-radius:8px; padding:16px 18px; margin-bottom:12px;}
+  .ctx-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;}
+  .ctx-name{font-size:14px; font-weight:500;}
+  .ctx-label{font-size:12px; color:var(--blue); background:rgba(111,143,237,0.12); padding:3px 9px; border-radius:12px;}
+  .ctx-compare{display:flex; align-items:center; gap:16px;}
+  .ctx-bar{flex:1;}
+  .ctx-bar-track{height:20px; background:var(--panel-2); border-radius:4px; position:relative; overflow:hidden;}
+  .ctx-bar-fill{height:100%; border-radius:4px;}
+  .ctx-bar-fill.without{background:var(--red);}
+  .ctx-bar-fill.with{background:var(--green);}
+  .ctx-caption{font-size:11px; color:var(--ink-faint); margin-top:4px;}
+  .ctx-pct{font-family:'IBM Plex Mono',monospace; font-size:13px; min-width:44px; text-align:right;}
+
+  .cost-flow{display:flex; flex-direction:column; gap:10px;}
+  .cost-line{display:flex; justify-content:space-between; padding:12px 16px; border-radius:8px; font-size:14px;}
+  .cost-line.pos{background:var(--green-dim); color:var(--green);}
+  .cost-line.neg{background:var(--red-dim); color:var(--red);}
+  .cost-line.total{background:var(--panel-2); color:var(--ink); font-weight:500; border:1px solid var(--line);}
+  .cost-val{font-family:'IBM Plex Mono',monospace;}
+  .cost-assumption{font-size:12px; color:var(--ink-faint); margin-top:16px; line-height:1.6;}
+
+  .scenario-picker{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:24px;}
+  .scenario-btn{background:var(--panel); border:1px solid var(--line); color:var(--ink-muted); font-size:13px; padding:9px 14px; border-radius:6px; cursor:pointer; font-family:'IBM Plex Sans',sans-serif; transition:none;}
+  .scenario-btn:hover{border-color:var(--ink-faint); color:var(--ink);}
+  .scenario-btn.active{background:var(--panel-2); border-color:var(--blue); color:var(--ink);}
+
+  .scenario-detail{border:1px solid var(--line); border-radius:10px; padding:28px; background:var(--panel);}
+  .sd-top{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; gap:16px;}
+  .sd-title{font-size:16px; font-weight:500;}
+  .sd-amount{font-size:12px; color:var(--ink-muted); margin-top:4px;}
+  .sd-score{text-align:right;}
+  .sd-score .num{font-family:'IBM Plex Mono',monospace; font-size:32px; font-weight:500;}
+  .sd-score .tag{font-size:11px; margin-top:2px; padding:2px 8px; border-radius:10px; display:inline-block;}
+  .tag-flagged{background:var(--red-dim); color:var(--red);}
+  .tag-safe{background:var(--green-dim); color:var(--green);}
+
+  .gauge-track{height:10px; background:var(--panel-2); border-radius:5px; overflow:hidden; margin-bottom:20px; position:relative;}
+  .gauge-fill{height:100%; border-radius:5px;}
+  .gauge-mark{position:absolute; top:-3px; width:2px; height:16px; background:var(--ink-faint);}
+
+  .sd-section{margin-bottom:16px;}
+  .sd-label{font-size:11px; color:var(--ink-faint); margin-bottom:8px; text-transform:none;}
+  .factor-list{display:flex; flex-direction:column; gap:6px;}
+  .factor-item{font-size:13px; color:var(--ink-muted); padding-left:14px; position:relative;}
+  .factor-item::before{content:"–"; position:absolute; left:0; color:var(--ink-faint);}
+
+  .action-box{background:var(--panel-2); border-left:3px solid var(--amber); border-radius:0 6px 6px 0; padding:12px 16px; font-size:13px; margin-top:4px;}
+  .reason-box{background:var(--panel-2); border-left:3px solid var(--red); border-radius:0 6px 6px 0; padding:12px 16px; font-size:13px; margin-top:4px;}
+
+  .limitations{font-size:13px; color:var(--ink-muted); line-height:1.8;}
+  .limitations li{margin-bottom:10px;}
+  footer{padding:32px 0 0; font-size:12px; color:var(--ink-faint);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow mono">Razorpay Buildathon — AI Risk Manager</p>
+    <h1 class="serif">Chargeback Risk Console</h1>
+    <p class="sub">Predicts which transactions are likely to end in a chargeback, explains why, and recommends what to do about it.</p>
+    <div class="hero-row">
+      <div class="hero-stat">
+        <div class="num mono">₹1,72,050</div>
+        <div class="lbl">Net value protected, per 1,000 transactions</div>
+      </div>
+      <div class="hero-stat secondary">
+        <div class="num mono">0.749</div>
+        <div class="lbl">ROC-AUC</div>
+      </div>
+      <div class="hero-stat secondary">
+        <div class="num mono">40%</div>
+        <div class="lbl">Precision at threshold 0.5</div>
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <div class="section-head">
+      <h2>Model performance</h2>
+      <p class="section-note">Random Forest · held-out test set, n = 1,000</p>
+    </div>
+    <div class="metric-grid">
+      <div class="metric-cell"><div class="val" style="color:var(--blue)">40.0%</div><div class="lbl">Precision</div></div>
+      <div class="metric-cell"><div class="val" style="color:var(--blue)">38.3%</div><div class="lbl">Recall</div></div>
+      <div class="metric-cell"><div class="val" style="color:var(--blue)">39.1%</div><div class="lbl">F1 score</div></div>
+      <div class="metric-cell"><div class="val" style="color:var(--blue)">0.749</div><div class="lbl">ROC-AUC</div></div>
+      <div class="metric-cell"><div class="val">16.2%</div><div class="lbl">Chargeback rate</div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="two-col">
+      <div>
+        <div class="section-head"><h2>What the model weighs most</h2></div>
+        <div id="feat-bars"></div>
+      </div>
+      <div>
+        <div class="section-head"><h2>Confusion matrix</h2></div>
+        <div class="cm-grid">
+          <div class="cm-cell cm-head"></div>
+          <div class="cm-cell cm-head">Predicted safe</div>
+          <div class="cm-cell cm-head">Predicted risky</div>
+          <div class="cm-cell cm-head">Actually safe</div>
+          <div class="cm-cell"><div class="cm-num cm-safe">745</div><div class="cm-tag">correct</div></div>
+          <div class="cm-cell"><div class="cm-num cm-risk">93</div><div class="cm-tag">false alarm</div></div>
+          <div class="cm-cell cm-head">Actually chargeback</div>
+          <div class="cm-cell"><div class="cm-num cm-risk">100</div><div class="cm-tag">missed</div></div>
+          <div class="cm-cell"><div class="cm-num cm-safe">62</div><div class="cm-tag">caught</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Try a transaction</h2>
+      <p class="section-note">Real predictions from the trained model, not simulated</p>
+    </div>
+    <div class="scenario-picker" id="picker"></div>
+    <div class="scenario-detail" id="detail"></div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Chargeback reasons</h2>
+      <p class="section-note">Breakdown of 809 chargebacks in the dataset, by cause</p>
+    </div>
+    <div id="reason-bars"></div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Context awareness</h2>
+      <p class="section-note">Same raw signal, different outcome depending on circumstance</p>
+    </div>
+    <div id="ctx-list"></div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Cost impact</h2>
+      <p class="section-note">Illustrative ₹ figures, per 1,000 test transactions</p>
+    </div>
+    <div class="cost-flow">
+      <div class="cost-line pos"><span>Value from 62 chargebacks caught early</span><span class="cost-val">+₹1,86,000</span></div>
+      <div class="cost-line neg"><span>Cost of 93 false alarms (review friction)</span><span class="cost-val">−₹13,950</span></div>
+      <div class="cost-line total"><span>Net value added by the model</span><span class="cost-val">₹1,72,050</span></div>
+    </div>
+    <p class="cost-assumption">Assumes ₹3,000 average order value and ₹150 friction cost per false alarm — both estimates, not Razorpay figures. The 100 missed chargebacks (₹3,00,000) would be lost with or without this model; they represent room for improvement, not a cost the model introduces.</p>
+  </section>
+</div>
+
+<script>
+const featureImportance = [
+  {"name":"amount","value":13.3},
+  {"name":"checkout_speed_sec","value":12.3},
+  {"name":"avg_order_value","value":10.2},
+  {"name":"account_age_days","value":10.0},
+  {"name":"duplicate_transaction_flag","value":6.5},
+  {"name":"refund_requested_before_chargeback","value":6.1},
+  {"name":"name_mismatch_score","value":6.1},
+  {"name":"hour_of_day","value":6.0}
+];
+
+const contextTests = [
+  {"name":"Fast checkout","context_label":"During a sale","without_context":26.8,"with_context":15.6},
+  {"name":"High amount (>\u20b920k)","context_label":"During salary week","without_context":50.0,"with_context":16.7},
+  {"name":"Address mismatch","context_label":"Recent travel on file","without_context":23.9,"with_context":12.1}
+];
+
+const scenarios = [
+  {"id":"duplicate","title":"Duplicate payment, loyal customer","amount":2500,"risk_score":34.7,"flagged":false,"reason":null,"action":null,"factors":["Duplicate of a recent payment"]},
+  {"id":"fraud_pattern","title":"New account, stolen-card-like pattern","amount":22000,"risk_score":53.5,"flagged":true,"reason":"Fraud-Suspected","action":"Freeze transaction, compile evidence (device/address/ID mismatch), route to fraud review.","factors":["High order value (\u20b922,000)","New account (2 days old)","Billing/shipping address mismatch","Cardholder name mismatch","Device linked to multiple accounts","Very fast checkout (4s)"]},
+  {"id":"refund_denied","title":"Refund denied, escalated to bank","amount":3200,"risk_score":53.3,"flagged":true,"reason":"Service-Issue","action":"Escalate to support -- check why the earlier refund request wasn't honored.","factors":["Refund was requested and not resolved"]},
+  {"id":"sale_fast_checkout","title":"Fast checkout during Diwali sale","amount":1500,"risk_score":30.9,"flagged":false,"reason":null,"action":null,"factors":["Very fast checkout (5s)","Occurred during a sale period"]},
+  {"id":"fast_checkout_normal","title":"Fast checkout, ordinary day","amount":1500,"risk_score":38.2,"flagged":false,"reason":null,"action":null,"factors":["Very fast checkout (5s)"]},
+  {"id":"salary_high_amount","title":"Big purchase, salary week","amount":25000,"risk_score":29.6,"flagged":false,"reason":null,"action":null,"factors":["High order value (\u20b925,000)","Occurred during salary week"]},
+  {"id":"medical_emergency","title":"New customer, medical emergency","amount":18000,"risk_score":43.6,"flagged":false,"reason":null,"action":null,"factors":["New account (3 days old)"]},
+  {"id":"travel_mismatch","title":"Address mismatch while traveling","amount":1500,"risk_score":29.6,"flagged":false,"reason":null,"action":null,"factors":["Billing/shipping address mismatch","Recent travel on file"]},
+  {"id":"safe_regular","title":"Regular, low-risk purchase","amount":1500,"risk_score":24.8,"flagged":false,"reason":null,"action":null,"factors":["No notable risk signals"]}
+];
+
+const reasonBreakdown = [
+  {"name":"Service-Issue","count":355,"pct":43.9,"color":"var(--amber)"},
+  {"name":"Genuine-Dispute","count":246,"pct":30.4,"color":"var(--blue)"},
+  {"name":"Fraud-Suspected","count":131,"pct":16.2,"color":"var(--red)"},
+  {"name":"Accidental-Duplicate","count":77,"pct":9.5,"color":"var(--green)"}
+];
+
+document.getElementById('reason-bars').innerHTML = reasonBreakdown.map(r => `
+  <div class="reason-row">
+    <span class="reason-name">${r.name}</span>
+    <div class="reason-track"><div class="reason-fill" style="width:${r.pct}%; background:${r.color}"></div></div>
+    <span class="reason-val">${r.pct}% · ${r.count}</span>
+  </div>
+`).join('');
+
+const maxImp = Math.max(...featureImportance.map(f=>f.value));
+document.getElementById('feat-bars').innerHTML = featureImportance.map(f => `
+  <div class="bar-row">
+    <span class="mono" style="color:var(--ink-muted)">${f.name}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:${(f.value/maxImp*100).toFixed(0)}%"></div></div>
+    <span class="bar-val">${f.value}%</span>
+  </div>
+`).join('');
+
+document.getElementById('ctx-list').innerHTML = contextTests.map(c => `
+  <div class="ctx-item">
+    <div class="ctx-top">
+      <span class="ctx-name">${c.name}</span>
+      <span class="ctx-label">${c.context_label}</span>
+    </div>
+    <div class="ctx-compare">
+      <span class="ctx-pct" style="color:var(--red)">${c.without_context}%</span>
+      <div class="ctx-bar">
+        <div class="ctx-bar-track"><div class="ctx-bar-fill without" style="width:${c.without_context}%"></div></div>
+        <div class="ctx-caption">without context</div>
+      </div>
+    </div>
+    <div class="ctx-compare" style="margin-top:8px;">
+      <span class="ctx-pct" style="color:var(--green)">${c.with_context}%</span>
+      <div class="ctx-bar">
+        <div class="ctx-bar-track"><div class="ctx-bar-fill with" style="width:${c.with_context}%"></div></div>
+        <div class="ctx-caption">with context</div>
+      </div>
+    </div>
+  </div>
+`).join('');
+
+const picker = document.getElementById('picker');
+const detail = document.getElementById('detail');
+
+function renderScenario(id){
+  const s = scenarios.find(x=>x.id===id);
+  picker.querySelectorAll('.scenario-btn').forEach(b=>b.classList.toggle('active', b.dataset.id===id));
+  const color = s.flagged ? 'var(--red)' : 'var(--green)';
+  detail.innerHTML = `
+    <div class="sd-top">
+      <div>
+        <div class="sd-title">${s.title}</div>
+        <div class="sd-amount mono">Order amount: \u20b9${s.amount.toLocaleString('en-IN')}</div>
+      </div>
+      <div class="sd-score">
+        <div class="num" style="color:${color}">${s.risk_score}%</div>
+        <span class="tag ${s.flagged ? 'tag-flagged' : 'tag-safe'}">${s.flagged ? 'flagged' : 'not flagged'}</span>
+      </div>
+    </div>
+    <div class="gauge-track">
+      <div class="gauge-fill" style="width:${s.risk_score}%; background:${color}"></div>
+      <div class="gauge-mark" style="left:50%"></div>
+    </div>
+    <div class="sd-section">
+      <div class="sd-label">Key factors</div>
+      <div class="factor-list">${s.factors.map(f=>`<div class="factor-item">${f}</div>`).join('')}</div>
+    </div>
+    ${s.flagged ? `
+    <div class="sd-section">
+      <div class="sd-label">Reason</div>
+      <div class="reason-box">${s.reason}</div>
+    </div>
+    <div class="sd-section">
+      <div class="sd-label">Suggested action</div>
+      <div class="action-box">${s.action}</div>
+    </div>` : ''}
+  `;
+}
+
+picker.innerHTML = scenarios.map(s => `<button class="scenario-btn" data-id="${s.id}">${s.title}</button>`).join('');
+picker.querySelectorAll('.scenario-btn').forEach(b => b.addEventListener('click', () => renderScenario(b.dataset.id)));
+renderScenario(scenarios[1].id);
+</script>
+</body>
+</html>
