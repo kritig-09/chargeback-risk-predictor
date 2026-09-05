@@ -119,6 +119,7 @@
   .sd-score .tag{font-size:11px; margin-top:2px; padding:2px 8px; border-radius:10px; display:inline-block;}
   .tag-flagged{background:var(--red-dim); color:var(--red);}
   .tag-safe{background:var(--green-dim); color:var(--green);}
+   .tag-medium{background:var(--amber-dim); color:var(--amber);}
 
   .gauge-track{height:10px; background:var(--panel-2); border-radius:5px; overflow:hidden; margin-bottom:20px; position:relative;}
   .gauge-fill{height:100%; border-radius:5px;}
@@ -142,13 +143,13 @@
 <div class="wrap">
 
   <header>
-    <p class="eyebrow mono">AI Risk Manager — Chargeback Risk</p>
+    <p class="eyebrow mono">Razorpay AI Risk Manager — Chargeback Risk</p>
     <h1 class="serif">Chargeback Risk Console</h1>
     <p class="sub">Predicts which transactions are likely to end in a chargeback, explains why, and recommends what to do about it.</p>
     <div class="hero-row">
       <div class="hero-stat">
         <div class="num mono">₹1,72,050</div>
-        <div class="lbl">Net value protected, per 1,000 transactions</div>
+        <div class="lbl">Illustrative net value on 1,000 test transactions</div>
       </div>
       <div class="hero-stat secondary">
         <div class="num mono">0.749</div>
@@ -164,7 +165,7 @@
   <section>
     <div class="section-head">
       <h2>Model performance</h2>
-      <p class="section-note">Random Forest · held-out test set, n = 1,000</p>
+      <p class="section-note">Random Forest · 80% train / 20% held-out test · n = 1,000</p>
     </div>
     <div class="metric-grid">
       <div class="metric-cell"><div class="val" style="color:var(--blue)">40.0%</div><div class="lbl">Precision</div></div>
@@ -173,6 +174,7 @@
       <div class="metric-cell"><div class="val" style="color:var(--blue)">0.749</div><div class="lbl">ROC-AUC</div></div>
       <div class="metric-cell"><div class="val">16.2%</div><div class="lbl">Chargeback rate</div></div>
     </div>
+    <p class="cost-assumption" style="margin-top:14px;">Training set: 4,000 transactions (80%) · Held-out test set: 1,000 transactions (20%)</p>
   </section>
 
   <section>
@@ -201,7 +203,7 @@
   <section>
     <div class="section-head">
       <h2>Try a transaction</h2>
-      <p class="section-note" id="tryNote">Curated scenarios use real model output</p>
+      <p class="section-note" id="tryNote">Curated scenarios with real model predictions</p>
     </div>
     <div class="mode-toggle" id="modeToggle">
       <button class="mode-btn active" data-mode="curated">Curated scenarios</button>
@@ -263,10 +265,10 @@
     </div>
     <div class="cost-flow">
       <div class="cost-line pos"><span>Value from 62 chargebacks caught early</span><span class="cost-val">+₹1,86,000</span></div>
-      <div class="cost-line neg"><span>Cost of 93 false alarms (review friction)</span><span class="cost-val">−₹13,950</span></div>
-      <div class="cost-line total"><span>Net value added by the model</span><span class="cost-val">₹1,72,050</span></div>
+      <div class="cost-line neg"><span>93 false positives → estimated review friction</span><span class="cost-val">−₹13,950</span></div>
+      <div class="cost-line total"><span>Illustrative net value on 1,000 test transactions</span><span class="cost-val">₹1,72,050</span></div>
     </div>
-    <p class="cost-assumption">Assumes ₹3,000 average order value and ₹150 friction cost per false alarm — both estimates, not real merchant figures. The 100 missed chargebacks (₹3,00,000) would be lost with or without this model; they represent room for improvement, not a cost the model introduces.</p>
+    <p class="cost-assumption">Assumes ₹3,000 average order value and ₹150 friction cost per false positive — both estimates, not real merchant figures. The 100 missed chargebacks (₹3,00,000) would be lost with or without this model; they represent room for improvement, not a cost the model introduces.</p>
   </section>
 </div>
 
@@ -350,17 +352,31 @@ document.getElementById('ctx-list').innerHTML = contextTests.map(c => `
 const picker = document.getElementById('picker');
 const detail = document.getElementById('detail');
 
+function getRiskBand(score){
+  if (score < 33) return {label:'Low risk', color:'var(--green)', action:'APPROVE'};
+  if (score < 50) return {label:'Medium risk', color:'var(--amber)', action:'REVIEW'};
+  return {label:'High risk', color:'var(--red)', action:'VERIFY / BLOCK'};
+}
+
+function getDisplayAction(s, band){
+  if (band.label === 'Low risk') return 'Approve transaction — no additional intervention recommended.';
+  if (band.label === 'Medium risk') return 'Review transaction — verify relevant customer and order details before approval.';
+  return s.action || 'Verify transaction details and block/hold if the risk cannot be resolved.';
+}
+
 function renderDetail(s){
-  const color = s.flagged ? 'var(--red)' : 'var(--green)';
+  const band = getRiskBand(s.risk_score);
+  const color = band.color;
+  const action = getDisplayAction(s, band);
   detail.innerHTML = `
     <div class="sd-top">
       <div>
         <div class="sd-title">${s.title}</div>
-        <div class="sd-amount mono">Order amount: \u20b9${s.amount.toLocaleString('en-IN')}</div>
+        <div class="sd-amount mono">Order amount: ₹${s.amount.toLocaleString('en-IN')}</div>
       </div>
       <div class="sd-score">
         <div class="num" style="color:${color}">${s.risk_score}%</div>
-        <span class="tag ${s.flagged ? 'tag-flagged' : 'tag-safe'}">${s.flagged ? 'flagged' : 'not flagged'}</span>
+        <span class="tag ${band.label === 'Low risk' ? 'tag-safe' : band.label === 'Medium risk' ? 'tag-medium' : 'tag-flagged'}">${band.label}</span>
       </div>
     </div>
     <div class="gauge-track">
@@ -368,21 +384,21 @@ function renderDetail(s){
       <div class="gauge-mark" style="left:50%"></div>
     </div>
     <div class="sd-section">
-      <div class="sd-label">Key factors</div>
-      <div class="factor-list">${s.factors.map(f=>`<div class="factor-item">${f}</div>`).join('')}</div>
+      <div class="sd-label">Why is this transaction risky?</div>
+      <div class="factor-list">${s.factors.slice(0,3).map(f=>`<div class="factor-item">${f}</div>`).join('')}</div>
     </div>
-    ${s.flagged ? `
+    ${s.reason ? `
     <div class="sd-section">
-      <div class="sd-label">Reason</div>
+      <div class="sd-label">Chargeback reason</div>
       <div class="reason-box">${s.reason}</div>
-    </div>
-    <div class="sd-section">
-      <div class="sd-label">Suggested action</div>
-      <div class="action-box">${s.action}</div>
     </div>` : ''}
+    <div class="sd-section">
+      <div class="sd-label">Recommended action</div>
+      <div class="action-box" style="border-left-color:${color}"><strong>${band.action}</strong> — ${action}</div>
+    </div>
+    <p class="cost-assumption" style="margin-top:14px;">Risk bands are presentation-only operational guidance for this demo; the model's binary flag threshold remains 50%.</p>
   `;
 }
-
 function renderScenario(id){
   const s = scenarios.find(x=>x.id===id);
   picker.querySelectorAll('.scenario-btn').forEach(b=>b.classList.toggle('active', b.dataset.id===id));
@@ -534,7 +550,7 @@ document.getElementById('modeToggle').querySelectorAll('.mode-btn').forEach(b =>
     customView.style.display = custom ? '' : 'none';
     tryNote.textContent = custom
       ? "Runs the actual trained Random Forest model (200 trees), exported from the same code that produced this dashboard"
-      : 'Curated scenarios use real model output';
+      : 'Curated scenarios with real model predictions';
     if (custom) renderDetail(scoreCustomTransaction(readCustomForm()));
     else renderScenario(scenarios[1].id);
   });
