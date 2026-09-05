@@ -114,7 +114,11 @@ A standalone, self-contained interactive dashboard — **[view it live](https://
 
 <img src="screenshot/dashboard_preview.png" width="600"/>
 
-It includes headline business impact, model metrics, feature importance, a confusion matrix, a **live "Try a Transaction"** explorer with two modes — 9 curated real scenarios (real model predictions, not simulated), and a custom-transaction form where you enter all 20 raw features and get a live prediction from the actual trained Random Forest (200 trees, exported to JS and run entirely client-side) — a chargeback-reason breakdown, and the context-awareness comparisons above.
+It includes headline business impact, model metrics, feature importance, a confusion matrix, a **live "Try a Transaction"** explorer with 9 curated real scenarios (real model predictions, not simulated), a chargeback-reason breakdown, and the context-awareness comparisons above.
+
+### Custom Transaction Predictor
+
+Beyond the 9 curated scenarios, the dashboard also lets you enter your own transaction — all 20 raw features, including payment method, delivery confirmation, and context flags — and get a live risk prediction. This runs the actual trained Random Forest (200 trees), exported to JS and executed entirely client-side, not an approximation. Flagged transactions get the same reason and suggested-action logic as `reason_classifier.py`.
 
 ## Visual Analysis (Power BI)
 
