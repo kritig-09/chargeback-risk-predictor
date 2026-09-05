@@ -20,7 +20,6 @@ Built for the **AI Risk Manager** track — one class of loss (chargebacks), a w
 - [Dashboard](#dashboard)
 - [Visual Analysis (Power BI)](#visual-analysis-power-bi)
 - [Limitations](#limitations)
-- [Project Report](#project-report)
 - [Repository Structure](#repository-structure)
 - [How to Run](#how-to-run)
 
@@ -30,7 +29,7 @@ Built for the **AI Risk Manager** track — one class of loss (chargebacks), a w
 
 Merchants accepting online payments lose money to fraud, returns, and chargebacks. A chargeback occurs when a customer disputes a transaction with their bank, forcing a refund — often with an additional penalty to the merchant. Left undetected, a high chargeback rate can also get a merchant's payment account flagged or suspended.
 
-Chargebacks were chosen as the specific loss type to target, over fraud or return abuse, because the risk signals involved (transaction amount, address mismatch, account age, delivery evidence) are relatively objective — and the problem naturally extends into an explainable, actionable system rather than a plain yes/no classifier. (Full reasoning: [Project Report](Project_Report.pdf).)
+Chargebacks were chosen as the specific loss type to target, over fraud or return abuse, because the risk signals involved (transaction amount, address mismatch, account age, delivery evidence) are relatively objective — and the problem naturally extends into an explainable, actionable system rather than a plain yes/no classifier. (Full reasoning: [docs/Technical_Notes.md](docs/Technical_Notes.md#4-why-chargebacks-over-fraud-or-return-abuse).)
 
 ## Approach
 
@@ -88,8 +87,6 @@ Final model: **Random Forest**, threshold = 0.5
 | ROC-AUC | 0.749 |
 | Chargeback rate (test set) | 16.2% |
 
-**Data split:** 80% training (4,000 transactions) / 20% held-out test (1,000 transactions).
-
 Random Forest was chosen over Logistic Regression (higher recall but much lower precision, 20–29%) because minimising false positives — avoiding friction for genuine customers — was treated as the higher priority for a payment platform.
 
 <p float="left">
@@ -109,7 +106,7 @@ Confusion-matrix outcomes were converted into an illustrative ₹ estimate (assu
 |---|---|
 | Value from 62 chargebacks caught early | + ₹1,86,000 |
 | Cost of 93 false positives (review friction) | − ₹13,950 |
-| **Illustrative net value on 1,000 test transactions** | **₹1,72,050** |
+| **Net value added by the model** | **₹1,72,050** |
 
 The 100 still-missed chargebacks (₹3,00,000) are not counted as a model cost — that loss occurs with or without any detection system, and represents room for future improvement.
 
@@ -154,11 +151,7 @@ Findings:
 - The duplicate-transaction signal is under-weighted relative to its true strength, because duplicates are naturally rare (~3% of transactions) in the data.
 - All results are based on synthetic, rule-designed data, not real transaction history.
 
-## Project Report
-
-Full detailed write-up covering the problem framing, data generation, model training and evaluation, cost analysis, edge-case testing, explainability layer, dashboard, limitations, and design decisions:
-
-**[View / Download Project Report (PDF)](Project_Report.pdf)**
+Full detail, numbers, and the experiments behind each of these: **[docs/Technical_Notes.md](docs/Technical_Notes.md)**.
 
 ## Repository Structure
 
@@ -178,9 +171,10 @@ chargeback-risk-predictor/
 │   ├── cost_analysis.py           # ₹ business-impact estimate
 │   ├── edge_case_testing.py       # Scenario-based behavioural testing
 │   ├── reason_classifier.py       # Stage 2: reason + suggested action
-│   ├── build_dashboard_data.py    # Generates data embedded in dashboard.html
-│   └── export_model_to_js.py      # Exports trained RF model to JS for the live custom-transaction predictor
+│   └── build_dashboard_data.py    # Generates data embedded in dashboard.html
 ├── screenshot/                    # Output evidence for every step above
+├── docs/
+│   └── Technical_Notes.md         # Detailed experiment log and design trade-offs
 └── Project_Report.pdf             # Full detailed report
 ```
 
@@ -199,8 +193,10 @@ python threshold_tuning.py
 python cost_analysis.py
 python edge_case_testing.py
 python reason_classifier.py
-python export_model_to_js.py       # Exports the model for dashboard.html's custom-transaction feature
 ```
 
 Data generation uses a fixed random seed (42), so re-running `generate_data.py` reproduces the exact same 5,000 transactions and downstream results shown in this README.
 
+---
+
+Full write-up with every design decision and its reasoning: **[Project_Report.pdf](Project_Report.pdf)**
