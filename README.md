@@ -120,7 +120,7 @@ It includes headline business impact, model metrics, feature importance, a confu
 
 ### Custom Transaction Predictor
 
-Beyond the 9 curated scenarios, the dashboard also lets you enter your own transaction — all 20 raw features, including payment method, delivery confirmation, and context flags — and get a live risk prediction. This runs the actual trained Random Forest (200 trees), exported to JS and executed entirely client-side, not an approximation. Flagged transactions get the same reason and suggested-action logic as `reason_classifier.py`.
+Beyond the 9 curated scenarios, the dashboard also lets you enter your own transaction — all 20 raw features, including payment method, delivery confirmation, and context flags — and get a live risk prediction. This runs the actual trained Random Forest (200 trees), exported to JS and executed entirely client-side, not an approximation.Transactions receive the same reason/assessment and suggested-action logic used by reason_classifier.py.
 
 For the interactive demo, risk is also presented as operational guidance: **Low risk → Approve, Medium risk → Review, High risk → Verify/Block.** These bands are presentation-only; the model's binary flag threshold remains 50%.
 
