@@ -87,13 +87,13 @@ Final model: **Random Forest**, threshold = 0.5
 Random Forest was chosen over Logistic Regression (which had higher recall but much lower precision, 20–29%) because minimising false positives — avoiding friction for genuine customers — was treated as the higher priority for a payment platform.
 
 <p float="left">
-  <img src="screenshots/random_forest_results.png" width="420"/>
-  <img src="screenshots/model_evaluation_confusion_matrix.png" width="420"/>
+  <img src="screenshot/random_forest_results.png" width="420"/>
+  <img src="screenshot/model_evaluation_confusion_matrix.png" width="420"/>
 </p>
 
 **Context-awareness was explicitly validated** — the same raw signal produces a different risk level depending on circumstance:
 
-<img src="screenshots/eda_edge_case_validation.png" width="520"/>
+<img src="screenshot/eda_edge_case_validation.png" width="520"/>
 
 ## Cost Impact
 
@@ -131,13 +131,13 @@ Stated openly, as the evaluation bar for this track requires honest metrics incl
 Supplementary charts built directly from the generated dataset:
 
 <p float="left">
-  <img src="screenshots/pbi_chargeback_reasons.png" width="270"/>
-  <img src="screenshots/pbi_payment_method.png" width="270"/>
-  <img src="screenshots/pbi_delivery_confirmation.png" width="270"/>
+  <img src="screenshot/pbi_chargeback_reasons.png" width="270"/>
+  <img src="screenshot/pbi_payment_method.png" width="270"/>
+  <img src="screenshot/pbi_delivery_confirmation.png" width="270"/>
 </p>
 <p float="left">
-  <img src="screenshots/pbi_sale_period_effect.png" width="270"/>
-  <img src="screenshots/pbi_salary_week_effect.png" width="270"/>
+  <img src="screenshot/pbi_sale_period_effect.png" width="270"/>
+  <img src="screenshot/pbi_salary_week_effect.png" width="270"/>
 </p>
 
 Findings:
@@ -165,7 +165,7 @@ chargeback-risk-predictor/
 │   ├── edge_case_testing.py       # Scenario-based behavioural testing
 │   ├── reason_classifier.py       # Stage 2: reason + suggested action
 │   └── build_dashboard_data.py    # Generates data embedded in dashboard.html
-├── screenshots/                   # Output evidence for every step above
+├── screenshot/                   # Output evidence for every step above
 └── Project_Report.docx            # Full detailed report
 ```
 
