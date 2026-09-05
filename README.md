@@ -4,6 +4,8 @@ An AI-based risk detector that predicts whether a transaction is likely to resul
 
 Built for the **AI Risk Manager** track — one class of loss (chargebacks), a working detector with measured precision and recall on a held-out test set, and honest reporting of false-positive cost.
 
+**Live dashboard:** [kritig-09.github.io/chargeback-risk-predictor](https://kritig-09.github.io/chargeback-risk-predictor/dashboard.html)
+
 ---
 
 ## Table of Contents
@@ -13,12 +15,11 @@ Built for the **AI Risk Manager** track — one class of loss (chargebacks), a w
 - [Features Used](#features-used)
 - [Results](#results)
 - [Cost Impact](#cost-impact)
-- [Known Limitations](#known-limitations)
 - [Dashboard](#dashboard)
 - [Visual Analysis (Power BI)](#visual-analysis-power-bi)
+- [Limitations](#limitations)
 - [Repository Structure](#repository-structure)
 - [How to Run](#how-to-run)
-- [Full Report](#full-report)
 
 ---
 
@@ -26,7 +27,7 @@ Built for the **AI Risk Manager** track — one class of loss (chargebacks), a w
 
 Merchants accepting online payments lose money to fraud, returns, and chargebacks. A chargeback occurs when a customer disputes a transaction with their bank, forcing a refund — often with an additional penalty to the merchant. Left undetected, a high chargeback rate can also get a merchant's payment account flagged or suspended.
 
-Three loss types were considered for this problem: **fraud**, **return abuse**, and **chargebacks**. Chargebacks were chosen because the risk signals involved (transaction amount, address mismatch, account age, delivery evidence) are relatively objective, and the problem naturally extends into an explainable, actionable system rather than a plain yes/no classifier.
+Chargebacks were chosen as the specific loss type to target, over fraud or return abuse, because the risk signals involved (transaction amount, address mismatch, account age, delivery evidence) are relatively objective — and the problem naturally extends into an explainable, actionable system rather than a plain yes/no classifier. (Full reasoning: [docs/Technical_Notes.md](docs/Technical_Notes.md#4-why-chargebacks-over-fraud-or-return-abuse).)
 
 ## Approach
 
@@ -55,7 +56,7 @@ Reason-classification layer (why + suggested action)
 Interactive dashboard
 ```
 
-**Why synthetic data:** Real chargeback-labelled datasets are not publicly available. Public fraud datasets that do exist use anonymised, PCA-transformed columns, which rules out building the business-context features (sale-period effects, salary-week effects, delivery evidence strength) this project relies on. A synthetic dataset was generated instead, from explicit, documented business rules — with random noise added so it isn't perfectly separable.
+Real chargeback-labelled datasets are not publicly available, and public fraud datasets that do exist use anonymised, unlabelled columns that rule out building the business-context features this project relies on. A synthetic dataset was generated instead, from explicit, documented business rules, with random noise added so it isn't perfectly separable.
 
 ## Features Used
 
@@ -84,7 +85,7 @@ Final model: **Random Forest**, threshold = 0.5
 | ROC-AUC | 0.749 |
 | Chargeback rate (test set) | 16.2% |
 
-Random Forest was chosen over Logistic Regression (which had higher recall but much lower precision, 20–29%) because minimising false positives — avoiding friction for genuine customers — was treated as the higher priority for a payment platform.
+Random Forest was chosen over Logistic Regression (higher recall but much lower precision, 20–29%) because minimising false positives — avoiding friction for genuine customers — was treated as the higher priority for a payment platform.
 
 <p float="left">
   <img src="screenshot/random_forest_results.png" width="420"/>
@@ -105,26 +106,15 @@ Confusion-matrix outcomes were converted into an illustrative ₹ estimate (assu
 | Cost of 93 false positives (review friction) | − ₹13,950 |
 | **Net value added by the model** | **₹1,72,050** |
 
-The 100 still-missed chargebacks (₹3,00,000) are not counted as a model cost — that loss occurs with or without any detection system, and represents room for future improvement rather than a weakness introduced by the model.
-
-## Known Limitations
-
-Stated openly, as the evaluation bar for this track requires honest metrics including false-positive cost:
-
-- **Precision/recall trade-off:** Roughly 6 in 10 flagged transactions turn out safe, and about 6 in 10 real chargebacks are missed. Threshold tuning found no setting that improves both simultaneously — this is inherent to the current feature set.
-- **Noise vs. signal:** An earlier version compressed the chargeback rate from ~16% to ~12% using scaling + noise, which was later diagnosed as the cause of weak model performance. Removing the scaling improved Random Forest precision from 31% to 40% and ROC-AUC from 0.688 to 0.749. A second fix attempt (tightening trigger thresholds) was also tested and performed worse — confirming the original ~16% rate as the best-tested configuration.
-- **Duplicate-transaction signal is under-weighted** relative to its true strength, because duplicates are naturally rare (~3% of transactions). Confirmed to be a data-volume issue, not a logic issue: temporarily raising duplicate frequency to 7% moved this feature from importance rank #10 to #1. Rolled back because it slightly reduced overall precision/recall.
-- All results are based on synthetic, rule-designed data, not real transaction history. A production version would need to learn these relationships from real, unlabelled data.
+The 100 still-missed chargebacks (₹3,00,000) are not counted as a model cost — that loss occurs with or without any detection system, and represents room for future improvement.
 
 ## Dashboard
 
-`dashboard.html` is a standalone, self-contained interactive dashboard — open it directly in any browser, no server required. It includes:
+A standalone, self-contained interactive dashboard — **[view it live](https://kritig-09.github.io/chargeback-risk-predictor/dashboard.html)**, or open `dashboard.html` directly in any browser (no server required).
 
-- Headline business impact and model metrics
-- Feature importance and confusion matrix
-- A **live "Try a Transaction"** explorer — 9 curated real scenarios, with real model predictions
-- Chargeback-reason breakdown
-- Context-awareness comparisons
+<img src="screenshot/dashboard_preview.png" width="600"/>
+
+It includes headline business impact, model metrics, feature importance, a confusion matrix, a **live "Try a Transaction"** explorer with 9 curated real scenarios (real model predictions, not simulated), a chargeback-reason breakdown, and the context-awareness comparisons above.
 
 ## Visual Analysis (Power BI)
 
@@ -147,6 +137,14 @@ Findings:
 - Among high-amount transactions, risk drops sharply during salary week.
 - OTP-confirmed delivery has the lowest chargeback rate of all delivery-confirmation types.
 
+## Limitations
+
+- Precision (40%) and recall (38%) leave room to grow — threshold tuning found no setting that improves both at once, a trade-off inherent to the current feature set.
+- The duplicate-transaction signal is under-weighted relative to its true strength, because duplicates are naturally rare (~3% of transactions) in the data.
+- All results are based on synthetic, rule-designed data, not real transaction history.
+
+Full detail, numbers, and the experiments behind each of these: **[docs/Technical_Notes.md](docs/Technical_Notes.md)**.
+
 ## Repository Structure
 
 ```
@@ -154,6 +152,7 @@ chargeback-risk-predictor/
 ├── README.md
 ├── requirements.txt
 ├── dashboard.html
+├── .gitignore
 ├── code/
 │   ├── generate_data.py           # Synthetic data generation
 │   ├── eda.py                     # Exploratory analysis + edge-case validation
@@ -165,8 +164,10 @@ chargeback-risk-predictor/
 │   ├── edge_case_testing.py       # Scenario-based behavioural testing
 │   ├── reason_classifier.py       # Stage 2: reason + suggested action
 │   └── build_dashboard_data.py    # Generates data embedded in dashboard.html
-├── screenshot/                   # Output evidence for every step above
-└── Project_Report.docx            # Full detailed report
+├── screenshot/                    # Output evidence for every step above
+├── docs/
+│   └── Technical_Notes.md         # Detailed experiment log and design trade-offs
+└── Project_Report.pdf             # Full detailed report
 ```
 
 ## How to Run
@@ -188,6 +189,6 @@ python reason_classifier.py
 
 Data generation uses a fixed random seed (42), so re-running `generate_data.py` reproduces the exact same 5,000 transactions and downstream results shown in this README.
 
-## Full Report
+---
 
-See [`Project_Report.docx`](Project_Report.docx) for the complete write-up — problem framing, full feature list, all validation steps, and every design decision with its reasoning.
+Full write-up with every design decision and its reasoning: **[Project_Report.pdf](Project_Report.pdf)**
