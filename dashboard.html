@@ -387,11 +387,10 @@ function renderDetail(s){
       <div class="sd-label">Why is this transaction risky?</div>
       <div class="factor-list">${s.factors.slice(0,3).map(f=>`<div class="factor-item">${f}</div>`).join('')}</div>
     </div>
-    ${s.reason ? `
     <div class="sd-section">
-      <div class="sd-label">Chargeback reason</div>
-      <div class="reason-box">${s.reason}</div>
-    </div>` : ''}
+      <div class="sd-label">${s.reason ? 'Chargeback reason' : 'Risk assessment'}</div>
+      <div class="reason-box">${s.reason || 'No dominant chargeback reason detected — this transaction is below the model's 50% chargeback-risk threshold.'}</div>
+    </div>
     <div class="sd-section">
       <div class="sd-label">Recommended action</div>
       <div class="action-box" style="border-left-color:${color}"><strong>${band.action}</strong> — ${action}</div>
